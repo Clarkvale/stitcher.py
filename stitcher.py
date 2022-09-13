@@ -1,39 +1,21 @@
 #!/usr/bin/env python
-
 # V 2.0
-
 # anton jm larsson anton.larsson@ki.se
 
 import argparse
-
 import re
-
-
-
 import pysam
-
 import warnings
-
 import numpy as np
-
 import pygtrie
-
 import portion as P
-
 import itertools
-
 import sys
-
 import time
-
 import os
-
 import json
-
 from scipy.special import logsumexp
-
 from joblib import delayed,Parallel
-
 from multiprocessing import Process, Manager
 
 __version__ = '2.0'
@@ -243,7 +225,6 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
             Q_list = [read.query_alignment_qualities]
 
         
-
         seq = read.query_alignment_sequence
 
         cigtuples = read.cigartuples
@@ -251,7 +232,6 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
         insertion_locs = get_insertions_locs(cigtuples)
 
         
-
         if len(insertion_locs) > 0:
 
             seq = "".join([char for idx, char in enumerate(seq) if idx not in insertion_locs])
@@ -265,7 +245,6 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
         skipped_intervals = get_skipped_tuples(cigtuples, ref_positions)
 
 
-
         if read.is_read1 and not single_end and read.get_tag(UMI_tag) != '':
 
             reverse_read1.append(read.is_reverse)
@@ -274,31 +253,17 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
 
             reverse_read1.append(read.is_reverse)
 
-
-
         exonic_list[i] = exonic
 
         intronic_list[i] = intronic
 
-
-
         seq_list.append(seq)
-
-
 
         qual_list.append(Q_list)
 
-
-
         ref_pos_list.append(ref_positions)
 
-
-
         ref_pos_set = ref_pos_set | set(ref_positions)
-
-
-
-
 
         if len(master_read) == 0:
 
@@ -308,22 +273,15 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
 
             master_read['skipped_intervals'].extend(skipped_intervals)
 
-
-
     sparse_row_dict = {b:[] for b in nucleotides}
 
     sparse_col_dict = {b:[] for b in nucleotides}
 
     sparse_ll_dict = {b:[] for b in nucleotides}
 
-
-
     ref_pos_set_array = np.array(list(ref_pos_set))
 
-
-
     ref_to_pos_dict = {p:o for p,o in zip(ref_pos_set_array,using_indexed_assignment(ref_pos_set_array))}
-
 
 
     for i, (seq, Q_list, ref_positions) in enumerate(zip(seq_list, qual_list, ref_pos_list)):
@@ -351,7 +309,6 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
     sparse_csc_dict = {b:csc_matrix((sparse_ll_dict[b], (sparse_row_dict[b],sparse_col_dict[b])), shape=(i+1,len(ref_pos_set_array))) for b in nucleotides}
 
 
-
     ll_list = [m.sum(axis=0) for m in sparse_csc_dict.values()]
 
     try:
@@ -362,23 +319,15 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
 
         return (False, ':'.join([gene,cell,umi]))
 
-
-
     full_ll = logsumexp(ll_sums, axis=0)
-
-
 
     prob_max = np.asarray(np.exp(np.amax(ll_sums, axis=0) - full_ll)).ravel()
 
     nuc_max = np.asarray(np.argmax(ll_sums, axis=0)).ravel()
 
-
-
     master_read['seq'] = ''.join([nucleotides[x] if p > 0.3 else 'N' for p, x in zip(prob_max, nuc_max)])
 
     master_read['phred'] = np.nan_to_num(np.rint(-10*np.log10(1-prob_max+1e-13)))
-
-
 
     if len(reverse_read1) == 0:
 
@@ -387,8 +336,6 @@ def stitch_reads(read_d, single_end, cell, gene, umi, UMI_tag):
     v, c = np.unique(reverse_read1, return_counts=True)
 
     m = c.argmax()
-
-
 
     master_read['SN'] = read.reference_name
 
@@ -1070,11 +1017,9 @@ if __name__ == '__main__':
 
     p.start()
 
-    
 
     print('Stitching reads for {}'.format(infile))
 
-    
 
     start = time.time()
 
